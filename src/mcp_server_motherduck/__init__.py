@@ -15,7 +15,6 @@ from .server import create_mcp_server
 __version__ = SERVER_VERSION
 
 logger = logging.getLogger("mcp_server_motherduck")
-logging.basicConfig(level=logging.INFO, format="[motherduck] %(levelname)s - %(message)s")
 
 
 @click.command()
@@ -113,6 +112,13 @@ logging.basicConfig(level=logging.INFO, format="[motherduck] %(levelname)s - %(m
     envvar="MCP_ALLOW_SWITCH_DATABASES",
     help="Enable the switch_database_connection tool to change databases at runtime. Disabled by default.",
 )
+@click.option(
+    "--log-level",
+    type=click.Choice(["debug", "info", "warning", "error", "critical"], case_sensitive=False),
+    default="info",
+    envvar="MCP_LOG_LEVEL",
+    help="(Default: `info`) Logging verbosity for server output.",
+)
 # Backwards compatibility aliases (deprecated)
 @click.option(
     "--saas-mode",
@@ -148,12 +154,18 @@ def main(
     query_timeout: int,
     init_sql: str | None,
     allow_switch_databases: bool,
+    log_level: str,
     # Deprecated args
     saas_mode: bool,
     read_only: bool,
     json_response: bool,
 ) -> None:
     """MotherDuck MCP Server - Execute SQL queries via DuckDB/MotherDuck."""
+    logging.basicConfig(
+        level=getattr(logging, log_level.upper()),
+        format="[motherduck] %(levelname)s - %(message)s",
+    )
+
     # Handle deprecated flags with warnings
     if saas_mode:
         warnings.warn(
